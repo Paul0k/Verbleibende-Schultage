@@ -88,6 +88,14 @@ body{
   font-size: clamp(1.4rem, 4.5vw, 2.4rem);
   color: var(--muted);
   letter-spacing: -0.01em;
+  display: inline-block;
+  transform-origin: center;
+  transition: transform var(--transition-med) cubic-bezier(.2,.9,.3,1);
+}
+
+.label:hover,
+.label:focus {
+  transform: translateY(-8px) scale(1.04) rotate(-1deg);
 }
 
 .side {
