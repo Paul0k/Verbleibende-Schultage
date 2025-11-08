@@ -137,7 +137,7 @@ function toggleBackgroundImage(show) {
 
   // Hintergrundbild-Einstellung laden
   const savedBgImage = localStorage.getItem('schultage_bgimage_v1');
-  const showBgImage = savedBgImage !== 'false'; // Standard: an (true)
+  const showBgImage = savedBgImage === 'true'; // Standard: aus (false)
   elShowBgImage.checked = showBgImage;
   toggleBackgroundImage(showBgImage);
 
