@@ -51,6 +51,26 @@ body.no-bg-image {
   background-attachment: fixed;
 }
 
+/* Hintergrundbild-Anpassung für Mobile */
+@media (max-width: 768px) {
+  body:not(.no-bg-image) {
+    background-size: min(80vw, 80vh), auto, auto, auto;
+    background-position: center top, 10% 20%, 95% 80%, center center;
+    background-attachment: scroll, scroll, scroll, scroll;
+  }
+  
+  body.no-bg-image {
+    background-attachment: scroll, scroll, scroll;
+  }
+}
+
+@media (max-width: 480px) {
+  body:not(.no-bg-image) {
+    background-size: min(75vw, 75vh), auto, auto, auto;
+    background-position: center top, 10% 20%, 95% 80%, center center;
+  }
+}
+
 .layout {
   display:flex;
   gap: clamp(24px, 6vw, 40px);
