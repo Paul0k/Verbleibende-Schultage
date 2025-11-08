@@ -41,6 +41,16 @@ body{
   background-attachment: fixed;
 }
 
+body.no-bg-image {
+  background: radial-gradient(1200px 600px at 10% 20%, rgba(6,122,255,0.06), transparent 8%),
+              radial-gradient(1000px 450px at 95% 80%, rgba(10,132,255,0.04), transparent 10%),
+              linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+  background-size: auto, auto, auto;
+  background-position: 10% 20%, 95% 80%, center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 .layout {
   display:flex;
   gap: clamp(24px, 6vw, 40px);

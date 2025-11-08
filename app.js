@@ -45,6 +45,7 @@ const elDaysTotal = document.getElementById('daysTotal');
 const elJulyTotal = document.getElementById('julyTotal');
 const elEndDate = document.getElementById('endDate');
 const elInclude = document.getElementById('includeToday');
+const elShowBgImage = document.getElementById('showBackgroundImage');
 const elHolidayFrom = document.getElementById('holidayFrom');
 const elHolidayTo = document.getElementById('holidayTo');
 const btnAdd = document.getElementById('addHoliday');
@@ -121,10 +122,24 @@ function recalc(){
   });
 })();
 
+function toggleBackgroundImage(show) {
+  if (show) {
+    document.body.classList.remove('no-bg-image');
+  } else {
+    document.body.classList.add('no-bg-image');
+  }
+}
+
 (function init(){
   const s = loadUserData(); saveUserData(s);
   const savedEnd = localStorage.getItem('schultage_enddate_v1'); if(savedEnd) elEndDate.value = savedEnd; else elEndDate.value = '2026-03-20';
   renderHolidayList(); elInclude.checked = false; recalc();
+
+  // Hintergrundbild-Einstellung laden
+  const savedBgImage = localStorage.getItem('schultage_bgimage_v1');
+  const showBgImage = savedBgImage !== 'false'; // Standard: an (true)
+  elShowBgImage.checked = showBgImage;
+  toggleBackgroundImage(showBgImage);
 
   btnOpen.addEventListener('click', ()=>{ drawer.classList.toggle('open'); drawer.setAttribute('aria-hidden', drawer.classList.contains('open') ? 'false' : 'true'); });
   btnClose.addEventListener('click', ()=>{ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); });
@@ -134,6 +149,11 @@ function recalc(){
 
   elEndDate.addEventListener('change', ()=>{ localStorage.setItem('schultage_enddate_v1', elEndDate.value); recalc(); });
   elInclude.addEventListener('change', recalc);
+  elShowBgImage.addEventListener('change', ()=>{ 
+    const show = elShowBgImage.checked; 
+    localStorage.setItem('schultage_bgimage_v1', show ? 'true' : 'false'); 
+    toggleBackgroundImage(show); 
+  });
   btnExport && btnExport.addEventListener('click', exportJSON);
   fileInput && fileInput.addEventListener('change', (ev)=>{ const f = ev.target.files && ev.target.files[0]; if(f) importJSONFile(f); ev.target.value=''; });
 
