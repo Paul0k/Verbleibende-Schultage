@@ -88,7 +88,7 @@ function recalc(){
   const include = !!elInclude.checked;
   if(isNaN(endDay)){ setNumberElements(0,0,0); return; }
   const r = calcUntilDayNums(today, endDay, include);
-  const julyDay = ymdToDayNum('2026-07-01');
+  const julyDay = ymdToDayNum('2026-06-25');
   const r2 = calcUntilDayNums(today, julyDay, include);
   setNumberElements(r.schooldays, r.total, r2.total);
 }
