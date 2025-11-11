@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stundenübersicht - Verbleibende Schultage</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="calendar-page">
+  <div class="calendar-container">
+    <header class="calendar-header">
+      <a href="index.html" class="back-btn" title="Zurück zur Hauptseite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <h1 class="month-year">Stundenübersicht</h1>
+    </header>
+
+    <div class="hours-wrapper">
+      <!-- Stundenplan-Eingabe -->
+      <div class="hours-section">
+        <h2 class="section-title">Stundenplan konfigurieren</h2>
+        
+        <div class="timetable-config">
+          <div class="subjects-section">
+            <h3>Fächer verwalten</h3>
+            <p class="help-text">Erstellen Sie zuerst alle Fächer, die Sie im Stundenplan verwenden möchten.</p>
+            <div class="subjects-list" id="subjectsList">
+              <!-- Subjects will be added here -->
+            </div>
+            <button class="action" id="addSubject">Fach hinzufügen</button>
+          </div>
+
+          <div class="week-selector">
+            <button class="week-btn active" data-week="A">Woche A</button>
+            <button class="week-btn" data-week="B">Woche B</button>
+          </div>
+
+          <div class="timetable-input" id="timetableA">
+            <h3>Woche A</h3>
+            <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
+            <div id="timetableScheduleA">
+              <!-- Timetable schedule will be rendered here -->
+            </div>
+          </div>
+
+          <div class="timetable-input hidden" id="timetableB">
+            <h3>Woche B</h3>
+            <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
+            <div id="timetableScheduleB">
+              <!-- Timetable schedule will be rendered here -->
+            </div>
+          </div>
+
+          <div class="reference-date-section">
+            <label for="referenceDate">Referenzdatum (Start der ersten Woche A):</label>
+            <input type="date" id="referenceDate" class="input" />
+            <p class="help-text">Datum, an dem die erste Woche A beginnt. Danach wechseln sich Woche A und B ab.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stundenübersicht -->
+      <div class="hours-section">
+        <h2 class="section-title">Verbleibende Stunden</h2>
+        
+        <div class="total-hours-card">
+          <div class="total-hours-label">Gesamtstunden übrig</div>
+          <div class="total-hours-value" id="totalHours">–</div>
+        </div>
+
+        <div class="subject-hours-list" id="subjectHoursList">
+          <!-- Subject hours will be displayed here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="hours.js" defer></script>
+</body>
+</html>
+

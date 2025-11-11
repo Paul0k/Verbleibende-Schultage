@@ -236,7 +236,7 @@ body.calendar-page {
 .calendar-btn {
   position:fixed;
   right: clamp(16px, 3vw, 22px);
-  bottom: clamp(96px, 20vw, 110px);
+  bottom: clamp(182px, 35vw, 198px);
   width: clamp(64px, 14vw, 72px);
   height: clamp(64px, 14vw, 72px);
   border-radius: clamp(12px, 4vw, 16px);
@@ -256,6 +256,31 @@ body.calendar-page {
 
 .calendar-btn:hover { transform: translateY(-8px); box-shadow: 0 26px 56px rgba(6,122,255,0.18); }
 .calendar-btn svg { width: clamp(28px, 6vw, 36px); height: clamp(28px, 6vw, 36px); color:var(--accent); }
+
+/* Stundenübersicht-Button auf Hauptseite */
+.hours-btn {
+  position:fixed;
+  right: clamp(16px, 3vw, 22px);
+  bottom: clamp(96px, 20vw, 110px);
+  width: clamp(64px, 14vw, 72px);
+  height: clamp(64px, 14vw, 72px);
+  border-radius: clamp(12px, 4vw, 16px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,248,252,0.95));
+  border: 1px solid rgba(210,215,225,0.75);
+  box-shadow: 0 14px 34px rgba(6,122,255,0.12);
+  cursor:pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  z-index:1200;
+  backdrop-filter: blur(6px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.hours-btn:hover { transform: translateY(-8px); box-shadow: 0 26px 56px rgba(6,122,255,0.18); }
+.hours-btn svg { width: clamp(28px, 6vw, 36px); height: clamp(28px, 6vw, 36px); color:var(--accent); }
 
 /* Kalender-Seite */
 .calendar-container {
@@ -530,5 +555,509 @@ body.calendar-page {
   .month-year {
     font-size: clamp(1.2rem, 5vw, 1.8rem);
     min-width: auto;
+  }
+}
+
+/* Stundenübersicht-Seite */
+.hours-wrapper {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.hours-section {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,252,0.95));
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: clamp(24px, 5vw, 32px);
+  box-shadow: var(--shadow-strong);
+  border: 1px solid rgba(220,225,235,0.7);
+  backdrop-filter: blur(10px);
+  margin-bottom: clamp(24px, 5vw, 32px);
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 clamp(20px, 4vw, 24px) 0;
+}
+
+.timetable-config {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 4vw, 24px);
+}
+
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mode-label {
+  font-weight: 600;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  color: var(--text);
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: clamp(12px, 3vw, 16px);
+  border-radius: 10px;
+  border: 2px solid rgba(210,215,225,0.9);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,248,252,0.95));
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-soft);
+}
+
+.mode-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+  border-color: var(--accent);
+}
+
+.mode-btn.active {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: white;
+  border-color: var(--accent);
+}
+
+.week-selector {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.week-btn {
+  flex: 1;
+  padding: clamp(12px, 3vw, 16px);
+  border-radius: 10px;
+  border: 2px solid rgba(210,215,225,0.9);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,248,252,0.95));
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-soft);
+}
+
+.week-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+  border-color: var(--accent);
+}
+
+.week-btn.active {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  color: white;
+  border-color: var(--accent);
+}
+
+.timetable-input {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timetable-input.hidden {
+  display: none;
+}
+
+.timetable-input h3 {
+  font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.subject-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-message {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+}
+
+.subject-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.subject-name-input {
+  flex: 2;
+  min-width: 120px;
+  padding: clamp(10px, 2.5vw, 12px);
+  border-radius: 8px;
+  border: 1px solid rgba(210,215,225,0.9);
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(10,20,40,0.03);
+}
+
+.subject-hours-input {
+  flex: 1;
+  min-width: 80px;
+  padding: clamp(10px, 2.5vw, 12px);
+  border-radius: 8px;
+  border: 1px solid rgba(210,215,225,0.9);
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(10,20,40,0.03);
+  max-width: 120px;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.checkbox-label-small {
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.checkbox-wrapper .checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.delete-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,59,48,0.1);
+  color: rgba(255,59,48,0.9);
+  border: 1px solid rgba(255,59,48,0.2);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.delete-btn:hover {
+  background: rgba(255,59,48,0.2);
+  transform: scale(1.1);
+}
+
+.reference-date-section {
+  margin-top: 8px;
+}
+
+.reference-date-section label {
+  display: block;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.help-text {
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  color: var(--muted);
+  margin: 8px 0 0 0;
+  line-height: 1.5;
+}
+
+.total-hours-card {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  border-radius: clamp(12px, 3vw, 16px);
+  padding: clamp(24px, 5vw, 32px);
+  text-align: center;
+  box-shadow: var(--shadow-strong);
+  margin-bottom: clamp(24px, 5vw, 32px);
+}
+
+.total-hours-label {
+  font-size: clamp(1rem, 3vw, 1.3rem);
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 12px;
+}
+
+.total-hours-value {
+  font-size: clamp(3rem, 12vw, 5rem);
+  font-weight: 900;
+  color: white;
+  line-height: 1;
+}
+
+.subject-hours-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subject-hours-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(16px, 4vw, 20px);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,252,0.9));
+  border: 1px solid rgba(220,225,235,0.6);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.subject-hours-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong);
+}
+
+.subject-hours-name {
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subject-hours-value {
+  font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Mobile Anpassungen für Stundenübersicht */
+@media (max-width: 768px) {
+  .subject-row {
+    flex-wrap: wrap;
+  }
+  
+  .subject-name-input {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+  
+  .subject-hours-input {
+    flex: 1;
+    min-width: 100px;
+    max-width: none;
+  }
+  
+  .checkbox-wrapper {
+    flex: 1 1 auto;
+    min-width: fit-content;
+  }
+  
+  .total-hours-value {
+    font-size: clamp(2.5rem, 15vw, 4rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .week-selector {
+    flex-direction: column;
+  }
+  
+  .subject-hours-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* Tagesmodus Styles */
+.subject-card-daily {
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,252,0.95));
+  border-radius: 12px;
+  padding: clamp(16px, 4vw, 20px);
+  border: 1px solid rgba(220,225,235,0.6);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 16px;
+}
+
+.subject-header-daily {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.subject-name-input-daily {
+  flex: 1;
+  min-width: 150px;
+  padding: clamp(10px, 2.5vw, 12px);
+  border-radius: 8px;
+  border: 1px solid rgba(210,215,225,0.9);
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(10,20,40,0.03);
+}
+
+.timetable-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.timetable-header {
+  display: grid;
+  grid-template-columns: 100px repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.timetable-row {
+  display: grid;
+  grid-template-columns: 100px repeat(5, 1fr);
+  gap: 4px;
+}
+
+.timetable-cell-header {
+  padding: clamp(8px, 2vw, 10px);
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(240,242,245,0.8), rgba(235,237,240,0.8));
+  border-radius: 6px;
+  border: 1px solid rgba(220,225,235,0.5);
+}
+
+.timetable-slot-label {
+  padding: clamp(8px, 2vw, 10px);
+  font-weight: 600;
+  font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(240,242,245,0.8), rgba(235,237,240,0.8));
+  border-radius: 6px;
+  border: 1px solid rgba(220,225,235,0.5);
+}
+
+.timetable-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(6px, 1.5vw, 8px);
+  background: white;
+  border-radius: 6px;
+  border: 1px solid rgba(220,225,235,0.5);
+  transition: background-color var(--transition-fast);
+}
+
+.timetable-cell:hover {
+  background: rgba(240,242,245,0.5);
+}
+
+.timetable-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.timetable-select {
+  width: 100%;
+  padding: clamp(6px, 1.5vw, 8px);
+  border-radius: 6px;
+  border: 1px solid rgba(210,215,225,0.9);
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(10,20,40,0.03);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.timetable-select:hover {
+  border-color: var(--accent);
+}
+
+.timetable-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(6,122,255,0.1);
+}
+
+.subjects-section {
+  margin-bottom: clamp(24px, 5vw, 32px);
+}
+
+.subjects-section h3 {
+  font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 clamp(12px, 3vw, 16px) 0;
+}
+
+/* Mobile Anpassungen für Tagesmodus */
+@media (max-width: 768px) {
+  .timetable-header,
+  .timetable-row {
+    grid-template-columns: 80px repeat(5, minmax(60px, 1fr));
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+  }
+  
+  .timetable-slot-label {
+    font-size: clamp(0.7rem, 1.5vw, 0.8rem);
+    padding: clamp(6px, 1.5vw, 8px);
+  }
+  
+  .timetable-cell-header {
+    font-size: clamp(0.75rem, 1.8vw, 0.85rem);
+    padding: clamp(6px, 1.5vw, 8px);
+  }
+  
+  .subject-header-daily {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .subject-name-input-daily {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .mode-buttons {
+    flex-direction: column;
+  }
+  
+  .timetable-header,
+  .timetable-row {
+    grid-template-columns: 70px repeat(5, minmax(50px, 1fr));
+    gap: 2px;
+  }
+  
+  .timetable-slot-label,
+  .timetable-cell-header,
+  .timetable-cell {
+    padding: clamp(4px, 1.2vw, 6px);
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+  }
+  
+  .timetable-checkbox {
+    width: 18px;
+    height: 18px;
   }
 }
