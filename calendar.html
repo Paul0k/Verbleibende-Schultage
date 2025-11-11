@@ -3,40 +3,49 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Verbleibende Schultage</title>
+  <title>Kalender - Verbleibende Schultage</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <main class="layout" role="main" aria-label="Schultage Übersicht">
-    <section class="big" aria-labelledby="label-main">
-      <div id="schoolDays" class="value" tabindex="0" aria-live="polite">–</div>
-      <div id="label-main" class="label">Schultage übrig</div>
-    </section>
-
-    <aside class="side" aria-label="Zusatzwerte">
-      <div class="pill" title="Kalendertage bis letzter Schultag">
-        <div class="k">Kalendertage bis letzter Schultag</div>
-        <div id="daysTotal" class="v">–</div>
+<body class="calendar-page">
+  <div class="calendar-container">
+    <header class="calendar-header">
+      <a href="index.html" class="back-btn" title="Zurück zur Hauptseite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="calendar-nav">
+        <button id="prevMonth" class="nav-btn" aria-label="Vorheriger Monat">‹</button>
+        <h1 id="monthYear" class="month-year"></h1>
+        <button id="nextMonth" class="nav-btn" aria-label="Nächster Monat">›</button>
       </div>
-      <div class="pill" title="Kalendertage bis Zeugnis">
-        <div class="k">Kalendertage bis Zeugnis</div>
-        <div id="julyTotal" class="v">–</div>
-      </div>
-    </aside>
-  </main>
+      <button id="todayBtn" class="today-btn">Heute</button>
+    </header>
 
-  <a href="calendar.html" class="calendar-btn" title="Kalender anzeigen">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-      <line x1="16" y1="2" x2="16" y2="6"></line>
-      <line x1="8" y1="2" x2="8" y2="6"></line>
-      <line x1="3" y1="10" x2="21" y2="10"></line>
-    </svg>
-  </a>
+    <div class="calendar-wrapper">
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Calendar days will be inserted here -->
+      </div>
+    </div>
+
+    <div class="calendar-legend">
+      <div class="legend-item">
+        <div class="legend-color weekend"></div>
+        <span>Wochenende</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color holiday"></div>
+        <span>Ferien</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color past"></div>
+        <span>Vergangen</span>
+      </div>
+    </div>
+  </div>
 
   <button class="settings-btn" id="openSettings" title="Einstellungen">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <!-- svg paths (wie zuvor) -->
       <path d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.108 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.108 1.204l.527.738c.32.447.27.96-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.78.93l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.02-.398-1.11-.94l-.149-.894c-.07-.424-.384-.764-.78-.93-.398-.164-.855-.142-1.205.108l-.737.527a1.125 1.125 0 01-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.806.272 1.203.107.397-.165.71-.505.78-.93l.15-.894z"/>
       <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
     </svg>
@@ -54,11 +63,6 @@
     <div class="checkbox-row">
       <label for="includeToday" class="label-inline">Heute mitzählen?</label>
       <input type="checkbox" id="includeToday" class="checkbox" />
-    </div>
-
-    <div class="checkbox-row">
-      <label for="showBackgroundImage" class="label-inline">Hintergrundbild anzeigen</label>
-      <input type="checkbox" id="showBackgroundImage" class="checkbox" />
     </div>
 
     <label class="block-label">Ferien hinzufügen (Von / Bis)</label>
@@ -83,6 +87,7 @@
 
   </div>
 
-  <script src="app.js" defer></script>
+  <script src="calendar.js" defer></script>
 </body>
 </html>
+

@@ -133,7 +133,17 @@ function toggleBackgroundImage(show) {
 (function init(){
   const s = loadUserData(); saveUserData(s);
   const savedEnd = localStorage.getItem('schultage_enddate_v1'); if(savedEnd) elEndDate.value = savedEnd; else elEndDate.value = '2026-03-20';
-  renderHolidayList(); elInclude.checked = false; recalc();
+  renderHolidayList();
+  
+  // Lade includeToday-Einstellung
+  const savedIncludeToday = localStorage.getItem('schultage_includetoday_v1');
+  if(savedIncludeToday !== null) {
+    elInclude.checked = savedIncludeToday === 'true';
+  } else {
+    elInclude.checked = false; // Standard: false
+  }
+  
+  recalc();
 
   // Hintergrundbild-Einstellung laden
   const savedBgImage = localStorage.getItem('schultage_bgimage_v1');
@@ -148,7 +158,7 @@ function toggleBackgroundImage(show) {
   btnReset && btnReset.addEventListener('click', ()=>{ if(confirm('Benutzer-Ferien zurücksetzen?')){ localStorage.removeItem(LS_KEY); renderHolidayList(); recalc(); } });
 
   elEndDate.addEventListener('change', ()=>{ localStorage.setItem('schultage_enddate_v1', elEndDate.value); recalc(); });
-  elInclude.addEventListener('change', recalc);
+  elInclude.addEventListener('change', ()=>{ localStorage.setItem('schultage_includetoday_v1', elInclude.checked ? 'true' : 'false'); recalc(); });
   elShowBgImage.addEventListener('change', ()=>{ 
     const show = elShowBgImage.checked; 
     localStorage.setItem('schultage_bgimage_v1', show ? 'true' : 'false'); 
