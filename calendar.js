@@ -146,9 +146,11 @@ function getDaysInMonth(month, year){
 }
 
 function getFirstDayOfMonth(month, year){
-  // JavaScript's getDay() gibt zurück: 0=Sonntag, 1=Montag, ..., 6=Samstag
+  // Verwende UTC für Konsistenz mit der Tag-Berechnung
+  // JavaScript's getUTCDay() gibt zurück: 0=Sonntag, 1=Montag, ..., 6=Samstag
   // Wir konvertieren zu: 0=Montag, 1=Dienstag, ..., 6=Sonntag
-  const day = new Date(year, month, 1).getDay();
+  const utcDate = new Date(Date.UTC(year, month, 1));
+  const day = utcDate.getUTCDay();
   return (day + 6) % 7; // Sonntag (0) -> 6, Montag (1) -> 0, etc.
 }
 
@@ -184,15 +186,18 @@ function renderCalendar(){
   
   // Tage des Monats
   for(let day = 1; day <= daysInMonth; day++){
-    const date = new Date(currentYear, currentMonth, day);
-    const dayOfWeek = date.getDay();
-    const dayNum = Math.floor(date.getTime() / MS_PER_DAY);
+    // Berechne dayNum konsistent mit ymdToDayNum (UTC-basiert)
+    const dayNum = Math.floor(Date.UTC(currentYear, currentMonth, day) / MS_PER_DAY);
+    // Berechne Wochentag auch UTC-basiert für Konsistenz
+    // JavaScript's getUTCDay() gibt: 0=Sonntag, 1=Montag, ..., 6=Samstag
+    const utcDate = new Date(Date.UTC(currentYear, currentMonth, day));
+    const dayOfWeekUTC = utcDate.getUTCDay();
     const ymd = dayNumToYmd(dayNum);
     
     const dayEl = document.createElement('div');
     dayEl.className = 'calendar-day';
     
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isWeekend = dayOfWeekUTC === 0 || dayOfWeekUTC === 6;
     const isPast = dayNum < today;
     const isHolidayDay = isHoliday(dayNum);
     const remainingDays = getRemainingSchoolDays(dayNum);
