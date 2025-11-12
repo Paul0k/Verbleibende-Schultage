@@ -6,14 +6,32 @@ const LS_KEY_INPUT_MODE = 'schultage_input_mode_v1';
 
 // Zeitslots für Doppelstunden (jeweils 2 Schulstunden)
 const TIME_SLOTS = [
-  { name: '1. Block', time: '7:50-9:25', hours: 2 },
-  { name: '2. Block', time: '9:45-11:20', hours: 2 },
-  { name: '3. Block', time: '11:40-13:15', hours: 2 },
-  { name: '4. Block', time: '14:00-15:30', hours: 2 },
-  { name: '5. Block', time: '16:00-17:30', hours: 2 }
+  { name: '1. Block', time: '7:50-9:25', hours: 2, startMinutes: 7 * 60 + 50, endMinutes: 9 * 60 + 25 },
+  { name: '2. Block', time: '9:45-11:20', hours: 2, startMinutes: 9 * 60 + 45, endMinutes: 11 * 60 + 20 },
+  { name: '3. Block', time: '11:40-13:15', hours: 2, startMinutes: 11 * 60 + 40, endMinutes: 13 * 60 + 15 },
+  { name: '4. Block', time: '14:00-15:30', hours: 2, startMinutes: 14 * 60 + 0, endMinutes: 15 * 60 + 30 },
+  { name: '5. Block', time: '16:00-17:30', hours: 2, startMinutes: 16 * 60 + 0, endMinutes: 17 * 60 + 30 }
 ];
 
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+let realtimeUpdateIntervalId = null;
+
+function getBerlinCurrentMinutes(){
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('de-DE', {
+    timeZone: 'Europe/Berlin',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  });
+  const parts = fmt.formatToParts(now);
+  const hourPart = parts.find(p => p.type === 'hour');
+  const minutePart = parts.find(p => p.type === 'minute');
+  const hour = hourPart ? parseInt(hourPart.value, 10) : 0;
+  const minute = minutePart ? parseInt(minutePart.value, 10) : 0;
+  return hour * 60 + minute;
+}
 
 function ymdToDayNum(ymd){ 
   if(!ymd) return NaN; 
@@ -388,11 +406,40 @@ function calculateRemainingHours(timetableData, referenceDate){
   }
   
   // Immer Tagesmodus verwenden (Dropdown-basiert)
-  return calculateRemainingHoursDaily(timetableData, referenceDate, firstWeekType, weeksA, weeksB, weeksAFirstSemester, weeksBFirstSemester, startDay, endDayNum, holidays);
+  const currentMinutesBerlin = includeToday ? getBerlinCurrentMinutes() : null;
+  return calculateRemainingHoursDaily(
+    timetableData,
+    referenceDate,
+    firstWeekType,
+    weeksA,
+    weeksB,
+    weeksAFirstSemester,
+    weeksBFirstSemester,
+    startDay,
+    endDayNum,
+    holidays,
+    includeToday,
+    today,
+    currentMinutesBerlin
+  );
 }
 
 // Berechne Stunden im Tagesmodus
-function calculateRemainingHoursDaily(timetableData, referenceDate, firstWeekType, weeksA, weeksB, weeksAFirstSemester, weeksBFirstSemester, startDay, endDayNum, holidays){
+function calculateRemainingHoursDaily(
+  timetableData,
+  referenceDate,
+  firstWeekType,
+  weeksA,
+  weeksB,
+  weeksAFirstSemester,
+  weeksBFirstSemester,
+  startDay,
+  endDayNum,
+  holidays,
+  includeTodayFlag,
+  todayDayNum,
+  currentMinutesBerlin
+){
   const subjectHours = {};
   let totalHours = 0;
   
@@ -448,6 +495,7 @@ function calculateRemainingHoursDaily(timetableData, referenceDate, firstWeekTyp
     if(weekdayIndex > 4 || weekdayIndex < 0) continue; // Sicherheit
     
     const isFirstSemester = dayNum <= firstSemesterEndDayNum;
+    const isToday = includeTodayFlag && currentMinutesBerlin !== null && dayNum === todayDayNum;
     
     // Gehe durch alle Zeitslots an diesem Tag
     if(schedule && schedule[weekdayIndex]){
@@ -461,9 +509,27 @@ function calculateRemainingHoursDaily(timetableData, referenceDate, firstWeekTyp
           if(subjectSettings && subjectSettings.onlyFirstSemester && !isFirstSemester) return;
         }
         
-        // Zähle Stunden für diesen Slot (2 Schulstunden pro Slot)
-        subjectHours[subjectName] = (subjectHours[subjectName] || 0) + slot.hours;
-        totalHours += slot.hours;
+        let slotHours = slot.hours;
+        
+        if(isToday && currentMinutesBerlin !== null){
+          if(currentMinutesBerlin >= slot.endMinutes){
+            // Slot bereits vollständig vorbei, zählt nicht mehr
+            slotHours = 0;
+          } else if(currentMinutesBerlin > slot.startMinutes && currentMinutesBerlin < slot.endMinutes){
+            // Slot ist aktuell im Gange – nur Restzeit zählen
+            const remainingMinutes = slot.endMinutes - currentMinutesBerlin;
+            slotHours = Math.max(remainingMinutes / 60, 0);
+          } else if(currentMinutesBerlin <= slot.startMinutes){
+            // Slot liegt noch in der Zukunft – zählt vollständig
+            slotHours = slot.hours;
+          }
+        }
+        
+        if(slotHours <= 0) return;
+        
+        // Zähle Stunden (ggf. Reststunden) für diesen Slot
+        subjectHours[subjectName] = (subjectHours[subjectName] || 0) + slotHours;
+        totalHours += slotHours;
       });
     }
   }
@@ -1223,6 +1289,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTimetable('A');
   renderTimetable('B');
   updateHoursDisplay();
+  // Echtzeit-Updates jede Minute (einmalig einrichten)
+  if(!realtimeUpdateIntervalId){
+    realtimeUpdateIntervalId = setInterval(() => {
+      updateHoursDisplay();
+    }, 60 * 1000);
+  }
   
   // Aktualisiere Anzeige wenn sich Daten ändern (z.B. Enddatum auf Hauptseite)
   window.addEventListener('storage', () => {
