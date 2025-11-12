@@ -127,9 +127,9 @@ function getRemainingSchoolDays(dateDayNum){
   if(dateDayNum > endDayNum) return null; // Nach dem letzten Schultag
 
   // Wenn includeToday aktiv ist und die Zelle das heutige Datum ist,
-  // zählen wir ab heute (inklusive). Für alle anderen Zellen zählen wir
-  // ab dem nächsten Tag (exklusiv), damit am letzten Schultag 0 übrig bleibt.
-  const startDay = (includeToday && dateDayNum === today) ? dateDayNum : dateDayNum +2;
+  // zählen wir ab heute (inklusive). Für alle anderen Zellen starten wir
+  // am Folgetag (exklusiv), damit am letzten Schultag 0 übrig bleibt.
+  const startDay = (includeToday && dateDayNum === today) ? dateDayNum : dateDayNum + 1;
 
   // Wenn Start nach Ende liegt: keine verbleibenden Tage
   if(startDay > endDayNum) return 0;
