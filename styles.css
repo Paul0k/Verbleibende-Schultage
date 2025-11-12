@@ -674,11 +674,45 @@ body.calendar-page {
   display: none;
 }
 
+.timetable-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: clamp(12px, 3vw, 16px);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .timetable-input h3 {
   font-size: clamp(1.2rem, 3.5vw, 1.5rem);
   font-weight: 700;
   color: var(--text);
   margin: 0;
+  flex: 1;
+}
+
+.timetable-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.small-action-btn {
+  padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 16px);
+  font-size: clamp(0.85rem, 2vw, 0.95rem);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid rgba(200,200,210,0.6);
+  background: rgba(255,255,255,0.9);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.small-action-btn:hover {
+  background: rgba(240,242,245,0.9);
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .subject-list {
@@ -1035,6 +1069,22 @@ body.calendar-page {
   
   .subject-name-input-daily {
     min-width: 100%;
+  }
+  
+  .timetable-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .timetable-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .small-action-btn {
+    flex: 1;
+    min-width: 120px;
   }
 }
 

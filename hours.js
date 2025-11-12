@@ -705,12 +705,7 @@ function renderSubjectsList(){
       renderTimetable('B');
       updateHoursDisplay();
       
-      // Wenn Fachname eingegeben wurde, scrolle zum Stundenplan
-      if(subject.name && subject.name.trim()){
-        setTimeout(() => {
-          scrollToTimetable();
-        }, 200);
-      }
+      // Kein automatisches Scrollen mehr
     });
     
     const checkboxWrapper = document.createElement('div');
@@ -1014,14 +1009,6 @@ function renderSubjectListDaily(week, subjects, listEl){
   });
 }
 
-// Scrolle zum Stundenplan
-function scrollToTimetable(){
-  const weekSelector = document.querySelector('.week-selector');
-  if(weekSelector){
-    weekSelector.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
 function addSubject(){
   timetableData.subjects.push({ name: '' });
   saveTimetableData(timetableData);
@@ -1030,14 +1017,117 @@ function addSubject(){
   renderTimetable('A');
   renderTimetable('B');
   
-  // Fokus auf das neue Eingabefeld setzen
+  // Fokus auf das neue Eingabefeld setzen (ohne die Seite zu scrollen)
   setTimeout(() => {
     const nameInputs = document.querySelectorAll('.subject-name-input');
     if(nameInputs.length > 0){
       const lastInput = nameInputs[nameInputs.length - 1];
-      lastInput.focus();
+      // Einfach fokussieren ohne zu scrollen
+      // Wenn das Feld außerhalb des Viewports ist, wird der Browser automatisch minimal scrollen,
+      // aber wir verhindern explizites Scrollen
+      try {
+        lastInput.focus({ preventScroll: true });
+      } catch(e) {
+        // Fallback für Browser die preventScroll nicht unterstützen
+        lastInput.focus();
+      }
     }
   }, 50);
+}
+
+// Kopiere Woche A nach Woche B
+function copyWeekAToB(){
+  if(!timetableData.weekA){
+    timetableData.weekA = { schedule: initializeSchedule() };
+  }
+  
+  const scheduleA = timetableData.weekA.schedule || initializeSchedule();
+  
+  // Erstelle eine tiefe Kopie des Schedules
+  const scheduleBCopy = [];
+  
+  for(let day = 0; day < 5; day++){
+    scheduleBCopy[day] = [];
+    if(scheduleA[day] && Array.isArray(scheduleA[day])){
+      for(let slot = 0; slot < 5; slot++){
+        scheduleBCopy[day][slot] = scheduleA[day][slot] || '';
+      }
+    } else {
+      scheduleBCopy[day] = ['', '', '', '', ''];
+    }
+  }
+  
+  if(!timetableData.weekB){
+    timetableData.weekB = { schedule: initializeSchedule() };
+  }
+  timetableData.weekB.schedule = scheduleBCopy;
+  saveTimetableData(timetableData);
+  renderTimetable('B');
+  updateHoursDisplay();
+  
+  // Wechsle zu Woche B
+  const weekBtns = document.querySelectorAll('.week-btn');
+  weekBtns.forEach(btn => {
+    if(btn.dataset.week === 'B'){
+      btn.click();
+    }
+  });
+}
+
+// Kopiere Woche B nach Woche A
+function copyWeekBToA(){
+  if(!timetableData.weekB){
+    timetableData.weekB = { schedule: initializeSchedule() };
+  }
+  
+  const scheduleB = timetableData.weekB.schedule || initializeSchedule();
+  
+  // Erstelle eine tiefe Kopie des Schedules
+  const scheduleACopy = [];
+  
+  for(let day = 0; day < 5; day++){
+    scheduleACopy[day] = [];
+    if(scheduleB[day] && Array.isArray(scheduleB[day])){
+      for(let slot = 0; slot < 5; slot++){
+        scheduleACopy[day][slot] = scheduleB[day][slot] || '';
+      }
+    } else {
+      scheduleACopy[day] = ['', '', '', '', ''];
+    }
+  }
+  
+  if(!timetableData.weekA){
+    timetableData.weekA = { schedule: initializeSchedule() };
+  }
+  timetableData.weekA.schedule = scheduleACopy;
+  saveTimetableData(timetableData);
+  renderTimetable('A');
+  updateHoursDisplay();
+  
+  // Wechsle zu Woche A
+  const weekBtns = document.querySelectorAll('.week-btn');
+  weekBtns.forEach(btn => {
+    if(btn.dataset.week === 'A'){
+      btn.click();
+    }
+  });
+}
+
+// Leere den Stundenplan einer Woche
+function clearTimetable(week){
+  if(!confirm(`Möchten Sie wirklich Woche ${week} leeren?`)){
+    return;
+  }
+  
+  if(!timetableData[`week${week}`]){
+    timetableData[`week${week}`] = { schedule: initializeSchedule() };
+  } else {
+    timetableData[`week${week}`].schedule = initializeSchedule();
+  }
+  
+  saveTimetableData(timetableData);
+  renderTimetable(week);
+  updateHoursDisplay();
 }
 
 function updateHoursDisplay(){
@@ -1117,6 +1207,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Fach hinzufügen
   document.getElementById('addSubject').addEventListener('click', () => addSubject());
+  
+  // Woche A nach B kopieren
+  document.getElementById('copyAtoB').addEventListener('click', () => copyWeekAToB());
+  
+  // Woche B nach A kopieren
+  document.getElementById('copyBtoA').addEventListener('click', () => copyWeekBToA());
+  
+  // Stundenplan leeren
+  document.getElementById('clearA').addEventListener('click', () => clearTimetable('A'));
+  document.getElementById('clearB').addEventListener('click', () => clearTimetable('B'));
   
   // Initial rendern
   renderSubjectsList();

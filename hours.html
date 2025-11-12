@@ -18,6 +18,20 @@
     </header>
 
     <div class="hours-wrapper">
+      <!-- Stundenübersicht -->
+      <div class="hours-section">
+        <h2 class="section-title">Verbleibende Stunden</h2>
+        
+        <div class="total-hours-card">
+          <div class="total-hours-label">Gesamtstunden übrig</div>
+          <div class="total-hours-value" id="totalHours">–</div>
+        </div>
+
+        <div class="subject-hours-list" id="subjectHoursList">
+          <!-- Subject hours will be displayed here -->
+        </div>
+      </div>
+
       <!-- Stundenplan-Eingabe -->
       <div class="hours-section">
         <h2 class="section-title">Stundenplan konfigurieren</h2>
@@ -38,7 +52,13 @@
           </div>
 
           <div class="timetable-input" id="timetableA">
-            <h3>Woche A</h3>
+            <div class="timetable-header-actions">
+              <h3>Woche A</h3>
+              <div class="timetable-actions">
+                <button class="ghost small-action-btn" id="copyAtoB" title="Woche A nach B kopieren">A → B kopieren</button>
+                <button class="ghost small-action-btn" id="clearA" title="Woche A leeren">Leeren</button>
+              </div>
+            </div>
             <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
             <div id="timetableScheduleA">
               <!-- Timetable schedule will be rendered here -->
@@ -46,7 +66,13 @@
           </div>
 
           <div class="timetable-input hidden" id="timetableB">
-            <h3>Woche B</h3>
+            <div class="timetable-header-actions">
+              <h3>Woche B</h3>
+              <div class="timetable-actions">
+                <button class="ghost small-action-btn" id="copyBtoA" title="Woche B nach A kopieren">B → A kopieren</button>
+                <button class="ghost small-action-btn" id="clearB" title="Woche B leeren">Leeren</button>
+              </div>
+            </div>
             <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
             <div id="timetableScheduleB">
               <!-- Timetable schedule will be rendered here -->
@@ -58,20 +84,6 @@
             <input type="date" id="referenceDate" class="input" />
             <p class="help-text">Datum, an dem die erste Woche A beginnt. Danach wechseln sich Woche A und B ab.</p>
           </div>
-        </div>
-      </div>
-
-      <!-- Stundenübersicht -->
-      <div class="hours-section">
-        <h2 class="section-title">Verbleibende Stunden</h2>
-        
-        <div class="total-hours-card">
-          <div class="total-hours-label">Gesamtstunden übrig</div>
-          <div class="total-hours-value" id="totalHours">–</div>
-        </div>
-
-        <div class="subject-hours-list" id="subjectHoursList">
-          <!-- Subject hours will be displayed here -->
         </div>
       </div>
     </div>
