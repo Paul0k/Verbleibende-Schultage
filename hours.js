@@ -2,7 +2,7 @@
 const MS_PER_DAY = 24*60*60*1000;
 const LS_KEY_TIMETABLE = 'schultage_timetable_v4';
 const LS_KEY_REFERENCE_DATE = 'schultage_reference_date_v1';
-const LS_KEY_INPUT_MODE = 'schultage_input_mode_v1';
+const LS_KEY_REALTIME_MODE = 'schultage_realtimeblocks_v1';
 
 // Zeitslots für Doppelstunden (jeweils 2 Schulstunden)
 const TIME_SLOTS = [
@@ -17,20 +17,16 @@ const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
 
 let realtimeUpdateIntervalId = null;
 
-function getBerlinCurrentMinutes(){
+
+
+function getBerlinCurrentSeconds(){
   const now = new Date();
-  const fmt = new Intl.DateTimeFormat('de-DE', {
-    timeZone: 'Europe/Berlin',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23'
-  });
-  const parts = fmt.formatToParts(now);
-  const hourPart = parts.find(p => p.type === 'hour');
-  const minutePart = parts.find(p => p.type === 'minute');
-  const hour = hourPart ? parseInt(hourPart.value, 10) : 0;
-  const minute = minutePart ? parseInt(minutePart.value, 10) : 0;
-  return hour * 60 + minute;
+  const berlinString = now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' });
+  const berlinNow = new Date(berlinString);
+  const hours = berlinNow.getHours();
+  const minutes = berlinNow.getMinutes();
+  const seconds = berlinNow.getSeconds();
+  return hours * 3600 + minutes * 60 + seconds;
 }
 
 function ymdToDayNum(ymd){ 
@@ -219,13 +215,13 @@ function saveReferenceDate(date){
   localStorage.setItem(LS_KEY_REFERENCE_DATE, date);
 }
 
-function getInputMode(){
-  const saved = localStorage.getItem(LS_KEY_INPUT_MODE);
-  return saved || 'weekly';
+function getUseRealTimeBlocks(){
+  const saved = localStorage.getItem(LS_KEY_REALTIME_MODE);
+  return saved === 'true';
 }
 
-function saveInputMode(mode){
-  localStorage.setItem(LS_KEY_INPUT_MODE, mode);
+function saveUseRealTimeBlocks(flag){
+  localStorage.setItem(LS_KEY_REALTIME_MODE, flag ? 'true' : 'false');
 }
 
 // Bestimme welche Woche (A oder B) für einen bestimmten Tag aktiv ist
@@ -332,15 +328,16 @@ function getRemainingSchoolWeeks(cutoffDate = null){
 
 // Berechne verbleibende Stunden
 function calculateRemainingHours(timetableData, referenceDate){
-  if(!referenceDate) return { total: 0, subjects: {} };
+  if(!referenceDate) return { totalSeconds: 0, subjectSeconds: {} };
   
   const today = todayBerlinDayNum();
   const endDate = getEndDate();
   const endDayNum = ymdToDayNum(endDate);
   const includeToday = getIncludeToday();
   const startDay = includeToday ? today : today + 1;
+  const useRealTimeBlocks = getUseRealTimeBlocks();
   
-  if(isNaN(endDayNum)) return { total: 0, subjects: {} };
+  if(isNaN(endDayNum)) return { totalSeconds: 0, subjectSeconds: {} };
   
   // Finde den ersten verbleibenden Schultag
   const holidays = buildEffectiveList();
@@ -365,7 +362,7 @@ function calculateRemainingHours(timetableData, referenceDate){
     break;
   }
   
-  if(!firstSchoolDay) return { total: 0, subjects: {} };
+  if(!firstSchoolDay) return { totalSeconds: 0, subjectSeconds: {} };
   
   // Bestimme welche Woche (A oder B) der erste Schultag ist
   const firstSchoolDayYmd = new Date(firstSchoolDay * MS_PER_DAY).toISOString().split('T')[0];
@@ -406,7 +403,7 @@ function calculateRemainingHours(timetableData, referenceDate){
   }
   
   // Immer Tagesmodus verwenden (Dropdown-basiert)
-  const currentMinutesBerlin = includeToday ? getBerlinCurrentMinutes() : null;
+  const currentSecondsBerlin = includeToday ? getBerlinCurrentSeconds() : null;
   return calculateRemainingHoursDaily(
     timetableData,
     referenceDate,
@@ -420,7 +417,8 @@ function calculateRemainingHours(timetableData, referenceDate){
     holidays,
     includeToday,
     today,
-    currentMinutesBerlin
+    currentSecondsBerlin,
+    useRealTimeBlocks
   );
 }
 
@@ -438,16 +436,17 @@ function calculateRemainingHoursDaily(
   holidays,
   includeTodayFlag,
   todayDayNum,
-  currentMinutesBerlin
+  currentSecondsBerlin,
+  useRealTimeBlocks
 ){
-  const subjectHours = {};
-  let totalHours = 0;
+  const subjectSeconds = {};
+  let totalSeconds = 0;
   
   // Initialisiere alle Fächer mit 0 Stunden
   if(timetableData.subjects && Array.isArray(timetableData.subjects)){
     timetableData.subjects.forEach(subject => {
       if(subject && subject.name && subject.name.trim()){
-        subjectHours[subject.name] = 0;
+        subjectSeconds[subject.name] = 0;
       }
     });
   }
@@ -495,7 +494,7 @@ function calculateRemainingHoursDaily(
     if(weekdayIndex > 4 || weekdayIndex < 0) continue; // Sicherheit
     
     const isFirstSemester = dayNum <= firstSemesterEndDayNum;
-    const isToday = includeTodayFlag && currentMinutesBerlin !== null && dayNum === todayDayNum;
+    const isToday = includeTodayFlag && currentSecondsBerlin !== null && dayNum === todayDayNum;
     
     // Gehe durch alle Zeitslots an diesem Tag
     if(schedule && schedule[weekdayIndex]){
@@ -509,39 +508,42 @@ function calculateRemainingHoursDaily(
           if(subjectSettings && subjectSettings.onlyFirstSemester && !isFirstSemester) return;
         }
         
-        let slotHours = slot.hours;
+        const slotStartSeconds = slot.startMinutes * 60;
+        const slotEndSeconds = slot.endMinutes * 60;
+        const actualDurationSeconds = Math.max(slotEndSeconds - slotStartSeconds, 1);
+        const fullSlotSeconds = useRealTimeBlocks ? 90 * 60 : slot.hours * 3600;
+        let slotSeconds = fullSlotSeconds;
         
-        if(isToday && currentMinutesBerlin !== null){
-          if(currentMinutesBerlin >= slot.endMinutes){
-            // Slot bereits vollständig vorbei, zählt nicht mehr
-            slotHours = 0;
-          } else if(currentMinutesBerlin > slot.startMinutes && currentMinutesBerlin < slot.endMinutes){
-            // Slot ist aktuell im Gange – nur Restzeit zählen
-            const remainingMinutes = slot.endMinutes - currentMinutesBerlin;
-            slotHours = Math.max(remainingMinutes / 60, 0);
-          } else if(currentMinutesBerlin <= slot.startMinutes){
-            // Slot liegt noch in der Zukunft – zählt vollständig
-            slotHours = slot.hours;
+        if(isToday && currentSecondsBerlin !== null){
+          let ratio;
+          if(currentSecondsBerlin >= slotEndSeconds){
+            ratio = 0;
+          } else if(currentSecondsBerlin <= slotStartSeconds){
+            ratio = 1;
+          } else {
+            ratio = (slotEndSeconds - currentSecondsBerlin) / actualDurationSeconds;
           }
+          ratio = Math.max(0, Math.min(1, ratio));
+          slotSeconds = Math.round(fullSlotSeconds * ratio);
         }
         
-        if(slotHours <= 0) return;
+        if(slotSeconds <= 0) return;
         
-        // Zähle Stunden (ggf. Reststunden) für diesen Slot
-        subjectHours[subjectName] = (subjectHours[subjectName] || 0) + slotHours;
-        totalHours += slotHours;
+        // Zähle Sekunden (ggf. Rest) für diesen Slot
+        subjectSeconds[subjectName] = (subjectSeconds[subjectName] || 0) + slotSeconds;
+        totalSeconds += slotSeconds;
       });
     }
   }
   
   // Entferne Fächer mit 0 Stunden
-  Object.keys(subjectHours).forEach(key => {
-    if(subjectHours[key] === 0){
-      delete subjectHours[key];
+  Object.keys(subjectSeconds).forEach(key => {
+    if(subjectSeconds[key] === 0){
+      delete subjectSeconds[key];
     }
   });
   
-  return { total: totalHours, subjects: subjectHours };
+  return { totalSeconds, subjectSeconds };
 }
 
 // UI-Funktionen
@@ -1196,6 +1198,32 @@ function clearTimetable(week){
   updateHoursDisplay();
 }
 
+function formatDuration(totalSeconds, showSeconds = false){
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const parts = [];
+  if(hours > 0){
+    parts.push(`${hours}h`);
+  }
+  if(minutes > 0 || hours > 0){
+    parts.push(`${minutes}m`);
+  }
+  if(showSeconds && (secs > 0 || minutes === 0 && hours === 0)){
+    parts.push(`${secs}s`);
+  }
+  if(parts.length === 0){
+    parts.push('0m');
+  }
+  return parts.join(' ');
+}
+
+function formatSchoolHours(totalSeconds){
+  const schulstunden = Math.max(0, totalSeconds) / (60 * 60);
+  return `${schulstunden.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} Stunden`;
+}
+
 function updateHoursDisplay(){
   const referenceDate = getReferenceDate();
   if(!referenceDate){
@@ -1204,16 +1232,21 @@ function updateHoursDisplay(){
     return;
   }
   
+  const useRealTimeBlocks = getUseRealTimeBlocks();
   const result = calculateRemainingHours(timetableData, referenceDate);
   
   // Gesamtstunden
-  document.getElementById('totalHours').textContent = Math.round(result.total * 10) / 10;
+  const totalSeconds = result.totalSeconds || 0;
+  document.getElementById('totalHours').textContent = useRealTimeBlocks
+    ? formatDuration(totalSeconds, true)
+    : formatSchoolHours(totalSeconds);
   
   // Stunden pro Fach
   const listEl = document.getElementById('subjectHoursList');
   listEl.innerHTML = '';
   
-  const subjects = Object.keys(result.subjects).sort();
+  const subjectSecondsMap = result.subjectSeconds || {};
+  const subjects = Object.keys(subjectSecondsMap).sort();
   
   if(subjects.length === 0){
     listEl.innerHTML = '<p class="muted">Keine Fächer im Stundenplan</p>';
@@ -1221,8 +1254,8 @@ function updateHoursDisplay(){
   }
   
   subjects.forEach(subject => {
-    const hours = result.subjects[subject];
-    if(hours === 0) return; // Überspringe Fächer mit 0 Stunden
+    const seconds = subjectSecondsMap[subject];
+    if(!seconds || seconds <= 0) return; // Überspringe Fächer mit 0 Zeit
     
     const card = document.createElement('div');
     card.className = 'subject-hours-card';
@@ -1233,12 +1266,18 @@ function updateHoursDisplay(){
     
     const hoursEl = document.createElement('div');
     hoursEl.className = 'subject-hours-value';
-    hoursEl.textContent = `${Math.round(hours * 10) / 10} Stunden`;
+    hoursEl.textContent = useRealTimeBlocks
+      ? formatDuration(seconds, true)
+      : formatSchoolHours(seconds);
     
     card.appendChild(nameEl);
     card.appendChild(hoursEl);
     listEl.appendChild(card);
   });
+  
+  if(!listEl.hasChildNodes()){
+    listEl.innerHTML = '<p class="muted">Keine Fächer mit verbleibender Zeit</p>';
+  }
 }
 
 let timetableData = loadTimetableData();
@@ -1271,6 +1310,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHoursDisplay();
   });
   
+  // Realtime (90 Minuten) Toggle
+  const realTimeBlocksCheckbox = document.getElementById('useRealTimeBlocks');
+  if(realTimeBlocksCheckbox){
+    realTimeBlocksCheckbox.checked = getUseRealTimeBlocks();
+    realTimeBlocksCheckbox.addEventListener('change', () => {
+      saveUseRealTimeBlocks(realTimeBlocksCheckbox.checked);
+      updateHoursDisplay();
+    });
+  }
+  
   // Fach hinzufügen
   document.getElementById('addSubject').addEventListener('click', () => addSubject());
   
@@ -1293,7 +1342,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(!realtimeUpdateIntervalId){
     realtimeUpdateIntervalId = setInterval(() => {
       updateHoursDisplay();
-    }, 60 * 1000);
+    }, 1000);
   }
   
   // Aktualisiere Anzeige wenn sich Daten ändern (z.B. Enddatum auf Hauptseite)
@@ -1303,6 +1352,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTimetable('A');
     renderTimetable('B');
     updateHoursDisplay();
+    if(realTimeBlocksCheckbox){
+      realTimeBlocksCheckbox.checked = getUseRealTimeBlocks();
+    }
   });
   
   // Aktualisiere beim Fokus (falls Daten auf anderer Seite geändert wurden)
@@ -1312,6 +1364,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTimetable('A');
     renderTimetable('B');
     updateHoursDisplay();
+    if(realTimeBlocksCheckbox){
+      realTimeBlocksCheckbox.checked = getUseRealTimeBlocks();
+    }
   });
 });
 
