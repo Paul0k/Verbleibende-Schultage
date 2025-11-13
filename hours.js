@@ -1294,6 +1294,10 @@ function importScheduleFromJSON(json){
     }
     
     alert('Stundenplan erfolgreich importiert.');
+    const textarea = document.getElementById('importScheduleText');
+    if(textarea){
+      textarea.value = '';
+    }
   } catch (err){
     console.error(err);
     alert('Import fehlgeschlagen: Ungültige Datei.');
@@ -1313,6 +1317,17 @@ function handleImportScheduleFile(event){
   reader.readAsText(file);
   // Reset input so same file can be selected again later
   event.target.value = '';
+}
+
+function importScheduleFromTextarea(){
+  const textarea = document.getElementById('importScheduleText');
+  if(!textarea) return;
+  const content = textarea.value.trim();
+  if(!content){
+    alert('Bitte JSON-Text einfügen.');
+    return;
+  }
+  importScheduleFromJSON(content);
 }
 
 function formatDuration(totalSeconds, showSeconds = false){
@@ -1446,6 +1461,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const importInput = document.getElementById('importScheduleInput');
   importInput && importInput.addEventListener('change', handleImportScheduleFile);
+  const importTextBtn = document.getElementById('importScheduleTextBtn');
+  importTextBtn && importTextBtn.addEventListener('click', importScheduleFromTextarea);
 
   // Woche A nach B kopieren
   document.getElementById('copyAtoB').addEventListener('click', () => copyWeekAToB());

@@ -1061,6 +1061,27 @@ body.calendar-page {
   flex-wrap: wrap;
 }
 
+.import-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 240px;
+  min-width: min(100%, 320px);
+}
+
+.import-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(210,215,225,0.9);
+  font-size: 0.95rem;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: white;
+  box-shadow: inset 0 1px 2px rgba(10,20,40,0.03);
+}
+
 .import-label {
   cursor: pointer;
   display: inline-flex;
@@ -1113,6 +1134,10 @@ body.calendar-page {
   .small-action-btn {
     flex: 1;
     min-width: 120px;
+  }
+
+  .import-text {
+    min-width: 100%;
   }
 }
 
