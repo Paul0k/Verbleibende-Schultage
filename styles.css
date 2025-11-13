@@ -1048,6 +1048,30 @@ body.calendar-page {
   margin: 0 0 clamp(12px, 3vw, 16px) 0;
 }
 
+.subjects-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.import-export {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.import-label {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
 /* Mobile Anpassungen für Tagesmodus */
 @media (max-width: 768px) {
   .timetable-header,

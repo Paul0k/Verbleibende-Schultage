@@ -1198,6 +1198,123 @@ function clearTimetable(week){
   updateHoursDisplay();
 }
 
+function sanitizeSchedule(schedule){
+  const sanitized = [];
+  for(let day = 0; day < 5; day++){
+    sanitized[day] = [];
+    if(schedule && Array.isArray(schedule[day])){
+      for(let slot = 0; slot < 5; slot++){
+        const value = schedule[day][slot];
+        sanitized[day][slot] = (typeof value === 'string') ? value : '';
+      }
+    } else {
+      sanitized[day] = ['', '', '', '', ''];
+    }
+  }
+  return sanitized;
+}
+
+function sanitizeImportedData(data){
+  const sanitized = {
+    subjects: [],
+    weekA: { schedule: sanitizeSchedule([]) },
+    weekB: { schedule: sanitizeSchedule([]) },
+    subjectSettings: {}
+  };
+  
+  if(data && Array.isArray(data.subjects)){
+    sanitized.subjects = data.subjects
+      .filter(s => s && typeof s.name === 'string' && s.name.trim())
+      .map(s => ({ name: s.name.trim() }));
+  }
+  
+  if(data && data.subjectSettings && typeof data.subjectSettings === 'object'){
+    sanitized.subjectSettings = {};
+    Object.entries(data.subjectSettings).forEach(([key, value]) => {
+      if(typeof key === 'string' && key.trim()){
+        sanitized.subjectSettings[key.trim()] = {
+          onlyFirstSemester: !!(value && value.onlyFirstSemester)
+        };
+      }
+    });
+  }
+  
+  if(data && data.weekA){
+    const schedule = Array.isArray(data.weekA) ? data.weekA : data.weekA.schedule;
+    sanitized.weekA.schedule = sanitizeSchedule(schedule);
+  }
+  if(data && data.weekB){
+    const schedule = Array.isArray(data.weekB) ? data.weekB : data.weekB.schedule;
+    sanitized.weekB.schedule = sanitizeSchedule(schedule);
+  }
+  
+  return sanitized;
+}
+
+function exportSchedule(){
+  const exportData = {
+    subjects: timetableData.subjects,
+    weekA: timetableData.weekA,
+    weekB: timetableData.weekB,
+    subjectSettings: timetableData.subjectSettings,
+    useRealTimeBlocks: getUseRealTimeBlocks()
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'stundenplan_export.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importScheduleFromJSON(json){
+  try{
+    const parsed = JSON.parse(json);
+    const sanitized = sanitizeImportedData(parsed);
+    timetableData.subjects = sanitized.subjects;
+    timetableData.weekA = { schedule: sanitized.weekA.schedule };
+    timetableData.weekB = { schedule: sanitized.weekB.schedule };
+    timetableData.subjectSettings = sanitized.subjectSettings;
+    
+    saveTimetableData(timetableData);
+    renderSubjectsList();
+    renderTimetable('A');
+    renderTimetable('B');
+    updateHoursDisplay();
+    
+    if(parsed && typeof parsed.useRealTimeBlocks === 'boolean'){
+      saveUseRealTimeBlocks(parsed.useRealTimeBlocks);
+      const realTimeBlocksCheckbox = document.getElementById('useRealTimeBlocks');
+      if(realTimeBlocksCheckbox){
+        realTimeBlocksCheckbox.checked = parsed.useRealTimeBlocks;
+      }
+    }
+    
+    alert('Stundenplan erfolgreich importiert.');
+  } catch (err){
+    console.error(err);
+    alert('Import fehlgeschlagen: Ungültige Datei.');
+  }
+}
+
+function handleImportScheduleFile(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    importScheduleFromJSON(reader.result);
+  };
+  reader.onerror = () => {
+    alert('Datei konnte nicht gelesen werden.');
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be selected again later
+  event.target.value = '';
+}
+
 function formatDuration(totalSeconds, showSeconds = false){
   const seconds = Math.max(0, Math.round(totalSeconds));
   const hours = Math.floor(seconds / 3600);
@@ -1323,6 +1440,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Fach hinzufügen
   document.getElementById('addSubject').addEventListener('click', () => addSubject());
   
+  // Export / Import
+  const exportBtn = document.getElementById('exportSchedule');
+  exportBtn && exportBtn.addEventListener('click', exportSchedule);
+
+  const importInput = document.getElementById('importScheduleInput');
+  importInput && importInput.addEventListener('change', handleImportScheduleFile);
+
   // Woche A nach B kopieren
   document.getElementById('copyAtoB').addEventListener('click', () => copyWeekAToB());
   

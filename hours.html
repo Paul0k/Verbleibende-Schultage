@@ -43,7 +43,14 @@
             <div class="subjects-list" id="subjectsList">
               <!-- Subjects will be added here -->
             </div>
-            <button class="action" id="addSubject">Fach hinzufügen</button>
+            <div class="subjects-actions">
+              <button class="action" id="addSubject">Fach hinzufügen</button>
+              <div class="import-export">
+                <button class="ghost small-action-btn" id="exportSchedule">Exportieren</button>
+                <label class="ghost small-action-btn import-label" for="importScheduleInput">Importieren</label>
+                <input type="file" id="importScheduleInput" accept="application/json" class="hidden-file-input" />
+              </div>
+            </div>
           </div>
 
           <div class="week-selector">
