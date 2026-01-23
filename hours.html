@@ -67,11 +67,11 @@
               <h3>Woche A</h3>
               <div class="timetable-actions">
                 <button class="ghost small-action-btn" id="copyAtoB" title="Woche A nach B kopieren">A → B kopieren</button>
-                <button class="ghost small-action-btn" id="clearA" title="Woche A leeren">Leeren</button>
-              </div>
-            </div>
-            <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
-            <div id="timetableScheduleA">
+               <button class="ghost small-action-btn" id="clearA" title="Woche A leeren">Leeren</button>
+               </div>
+             </div>
+             <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Die Blöcke haben unterschiedliche Dauern (55 Minuten oder 35 Minuten).</p>
+             <div id="timetableScheduleA">
               <!-- Timetable schedule will be rendered here -->
             </div>
           </div>
@@ -81,11 +81,11 @@
               <h3>Woche B</h3>
               <div class="timetable-actions">
                 <button class="ghost small-action-btn" id="copyBtoA" title="Woche B nach A kopieren">B → A kopieren</button>
-                <button class="ghost small-action-btn" id="clearB" title="Woche B leeren">Leeren</button>
-              </div>
-            </div>
-            <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Jeder Zeitslot entspricht 2 Schulstunden.</p>
-            <div id="timetableScheduleB">
+               <button class="ghost small-action-btn" id="clearB" title="Woche B leeren">Leeren</button>
+               </div>
+             </div>
+             <p class="help-text">Wählen Sie für jeden Zeitslot das entsprechende Fach aus. Die Blöcke haben unterschiedliche Dauern (55 Minuten oder 35 Minuten).</p>
+             <div id="timetableScheduleB">
               <!-- Timetable schedule will be rendered here -->
             </div>
           </div>
@@ -94,11 +94,18 @@
             <label for="referenceDate">Referenzdatum (Start der ersten Woche A):</label>
             <input type="date" id="referenceDate" class="input" />
             <p class="help-text">Datum, an dem die erste Woche A beginnt. Danach wechseln sich Woche A und B ab.</p>
-            <div class="checkbox-row">
-              <label for="useRealTimeBlocks" class="label-inline">Reale Zeit (90 Minuten pro Block)</label>
-              <input type="checkbox" id="useRealTimeBlocks" class="checkbox" />
+            <div class="switch-row">
+              <label class="switch-label">Anzeigemodus</label>
+              <div class="switch-container">
+                <span class="switch-text-off">Stunden</span>
+                <label class="switch">
+                  <input type="checkbox" id="displayModeSwitch" />
+                  <span class="slider"></span>
+                </label>
+                <span class="switch-text-on">Blöcke (Echtzeit)</span>
+              </div>
             </div>
-            <p class="help-text">Bei aktivierter Option werden Blöcke mit 90 Minuten berechnet und die verbleibende Zeit in Echtzeit angezeigt.</p>
+            <p class="help-text">Schalten Sie um zwischen Stunden-Anzeige und Echtzeit-Blockzählung.</p>
           </div>
         </div>
       </div>

@@ -2,15 +2,17 @@
 const MS_PER_DAY = 24*60*60*1000;
 const LS_KEY_TIMETABLE = 'schultage_timetable_v4';
 const LS_KEY_REFERENCE_DATE = 'schultage_reference_date_v1';
-const LS_KEY_REALTIME_MODE = 'schultage_realtimeblocks_v1';
+const LS_KEY_DISPLAY_MODE = 'schultage_display_mode_v1';
 
-// Zeitslots für Doppelstunden (jeweils 2 Schulstunden)
+// Zeitslots für neue Schulstruktur (7 Blöcke: 6×55min + 1×35min)
 const TIME_SLOTS = [
-  { name: '1. Block', time: '7:50-9:25', hours: 2, startMinutes: 7 * 60 + 50, endMinutes: 9 * 60 + 25 },
-  { name: '2. Block', time: '9:45-11:20', hours: 2, startMinutes: 9 * 60 + 45, endMinutes: 11 * 60 + 20 },
-  { name: '3. Block', time: '11:40-13:15', hours: 2, startMinutes: 11 * 60 + 40, endMinutes: 13 * 60 + 15 },
-  { name: '4. Block', time: '14:00-15:30', hours: 2, startMinutes: 14 * 60 + 0, endMinutes: 15 * 60 + 30 },
-  { name: '5. Block', time: '16:00-17:30', hours: 2, startMinutes: 16 * 60 + 0, endMinutes: 17 * 60 + 30 }
+  { name: '1. Block', time: '7:50-8:45', hours: 0.92, startMinutes: 7 * 60 + 50, endMinutes: 8 * 60 + 45, type: 'Fach' },
+  { name: '2. Block', time: '8:50-9:45', hours: 0.92, startMinutes: 8 * 60 + 50, endMinutes: 9 * 60 + 45, type: 'Dalton' },
+  { name: '3. Block', time: '10:05-11:00', hours: 0.92, startMinutes: 10 * 60 + 5, endMinutes: 11 * 60 + 0, type: 'Fach' },
+  { name: '4. Block', time: '11:05-12:00', hours: 0.92, startMinutes: 11 * 60 + 5, endMinutes: 12 * 60 + 0, type: 'Dalton' },
+  { name: '5. Block', time: '12:20-13:15', hours: 0.92, startMinutes: 12 * 60 + 20, endMinutes: 13 * 60 + 15, type: 'Fach' },
+  { name: '6. Block', time: '14:00-14:35', hours: 0.58, startMinutes: 14 * 60 + 0, endMinutes: 14 * 60 + 35, type: 'Dalton' },
+  { name: '7. Block', time: '14:35-15:30', hours: 0.92, startMinutes: 14 * 60 + 35, endMinutes: 15 * 60 + 30, type: 'Fach' }
 ];
 
 const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
@@ -161,25 +163,33 @@ function loadTimetableData(){
       data.weekB = { schedule: initializeSchedule() };
     }
     
-    // Stelle sicher, dass onlyFirstSemester in subjectSettings ist
-    if(data.weekA.onlyFirstSemester){
-      Object.keys(data.weekA.onlyFirstSemester).forEach(subjectName => {
-        if(data.weekA.onlyFirstSemester[subjectName]){
-          data.subjectSettings[subjectName] = { onlyFirstSemester: true };
-        }
-      });
-      delete data.weekA.onlyFirstSemester;
-    }
-    if(data.weekB && data.weekB.onlyFirstSemester){
-      Object.keys(data.weekB.onlyFirstSemester).forEach(subjectName => {
-        if(data.weekB.onlyFirstSemester[subjectName]){
-          data.subjectSettings[subjectName] = { onlyFirstSemester: true };
-        }
-      });
-      delete data.weekB.onlyFirstSemester;
-    }
-    
-    return data;
+     // Stelle sicher, dass onlyFirstSemester in subjectSettings ist
+     if(data.weekA.onlyFirstSemester){
+       Object.keys(data.weekA.onlyFirstSemester).forEach(subjectName => {
+         if(data.weekA.onlyFirstSemester[subjectName]){
+           data.subjectSettings[subjectName] = { onlyFirstSemester: true };
+         }
+       });
+       delete data.weekA.onlyFirstSemester;
+     }
+     if(data.weekB && data.weekB.onlyFirstSemester){
+       Object.keys(data.weekB.onlyFirstSemester).forEach(subjectName => {
+         if(data.weekB.onlyFirstSemester[subjectName]){
+           data.subjectSettings[subjectName] = { onlyFirstSemester: true };
+         }
+       });
+       delete data.weekB.onlyFirstSemester;
+     }
+
+     // Migriere von 5-Slot zu 7-Slot Struktur
+     if(data.weekA && data.weekA.schedule){
+       data.weekA.schedule = sanitizeSchedule(data.weekA.schedule);
+     }
+     if(data.weekB && data.weekB.schedule){
+       data.weekB.schedule = sanitizeSchedule(data.weekB.schedule);
+     }
+
+     return data;
   } catch(e) {
     return { 
       subjects: [], 
@@ -190,12 +200,12 @@ function loadTimetableData(){
   }
 }
 
-// Initialisiere leeren Stundenplan (5 Wochentage x 5 Zeitslots)
+// Initialisiere leeren Stundenplan (5 Wochentage x 7 Zeitslots)
 function initializeSchedule(){
   const schedule = [];
   for(let day = 0; day < 5; day++){
     schedule[day] = [];
-    for(let slot = 0; slot < 5; slot++){
+    for(let slot = 0; slot < 7; slot++){
       schedule[day][slot] = ''; // Leer = kein Fach
     }
   }
@@ -215,13 +225,14 @@ function saveReferenceDate(date){
   localStorage.setItem(LS_KEY_REFERENCE_DATE, date);
 }
 
-function getUseRealTimeBlocks(){
-  const saved = localStorage.getItem(LS_KEY_REALTIME_MODE);
+function getDisplayMode(){
+  // false = time mode (hours/minutes), true = block mode (real-time blocks)
+  const saved = localStorage.getItem(LS_KEY_DISPLAY_MODE);
   return saved === 'true';
 }
 
-function saveUseRealTimeBlocks(flag){
-  localStorage.setItem(LS_KEY_REALTIME_MODE, flag ? 'true' : 'false');
+function saveDisplayMode(flag){
+  localStorage.setItem(LS_KEY_DISPLAY_MODE, flag ? 'true' : 'false');
 }
 
 // Bestimme welche Woche (A oder B) für einen bestimmten Tag aktiv ist
@@ -335,7 +346,8 @@ function calculateRemainingHours(timetableData, referenceDate){
   const endDayNum = ymdToDayNum(endDate);
   const includeToday = getIncludeToday();
   const startDay = includeToday ? today : today + 1;
-  const useRealTimeBlocks = getUseRealTimeBlocks();
+  const displayMode = getDisplayMode();
+  const useRealTimeBlocks = displayMode; // In block mode, always use real-time calculation
   
   if(isNaN(endDayNum)) return { totalSeconds: 0, subjectSeconds: {} };
   
@@ -440,13 +452,16 @@ function calculateRemainingHoursDaily(
   useRealTimeBlocks
 ){
   const subjectSeconds = {};
+  const subjectBlocks = {};
   let totalSeconds = 0;
-  
-  // Initialisiere alle Fächer mit 0 Stunden
+  let totalBlocks = 0;
+
+  // Initialisiere alle Fächer mit 0 Stunden und Blöcken
   if(timetableData.subjects && Array.isArray(timetableData.subjects)){
     timetableData.subjects.forEach(subject => {
       if(subject && subject.name && subject.name.trim()){
         subjectSeconds[subject.name] = 0;
+        subjectBlocks[subject.name] = 0;
       }
     });
   }
@@ -511,7 +526,7 @@ function calculateRemainingHoursDaily(
         const slotStartSeconds = slot.startMinutes * 60;
         const slotEndSeconds = slot.endMinutes * 60;
         const actualDurationSeconds = Math.max(slotEndSeconds - slotStartSeconds, 1);
-        const fullSlotSeconds = useRealTimeBlocks ? 90 * 60 : slot.hours * 3600;
+        const fullSlotSeconds = useRealTimeBlocks ? actualDurationSeconds : slot.hours * 3600;
         let slotSeconds = fullSlotSeconds;
         
         if(isToday && currentSecondsBerlin !== null){
@@ -526,24 +541,44 @@ function calculateRemainingHoursDaily(
           ratio = Math.max(0, Math.min(1, ratio));
           slotSeconds = Math.round(fullSlotSeconds * ratio);
         }
-        
+
         if(slotSeconds <= 0) return;
-        
+
         // Zähle Sekunden (ggf. Rest) für diesen Slot
         subjectSeconds[subjectName] = (subjectSeconds[subjectName] || 0) + slotSeconds;
         totalSeconds += slotSeconds;
+
+        // Zähle Blöcke (ggf. Rest) für diesen Slot
+        let slotBlocks = 1.0; // Standard: 1 voller Block
+        if(isToday && currentSecondsBerlin !== null){
+          // Verwende denselben ratio für Blöcke
+          let ratio;
+          if(currentSecondsBerlin >= slotEndSeconds){
+            ratio = 0;
+          } else if(currentSecondsBerlin <= slotStartSeconds){
+            ratio = 1;
+          } else {
+            ratio = (slotEndSeconds - currentSecondsBerlin) / actualDurationSeconds;
+          }
+          ratio = Math.max(0, Math.min(1, ratio));
+          slotBlocks = ratio;
+        }
+
+        subjectBlocks[subjectName] = (subjectBlocks[subjectName] || 0) + slotBlocks;
+        totalBlocks += slotBlocks;
       });
     }
   }
   
-  // Entferne Fächer mit 0 Stunden
+  // Entferne Fächer mit 0 Stunden und Blöcken
   Object.keys(subjectSeconds).forEach(key => {
     if(subjectSeconds[key] === 0){
       delete subjectSeconds[key];
+      delete subjectBlocks[key];
     }
   });
-  
-  return { totalSeconds, subjectSeconds };
+
+  return { totalSeconds, subjectSeconds, totalBlocks, subjectBlocks };
 }
 
 // UI-Funktionen
@@ -576,10 +611,10 @@ function renderTimetableDaily(week){
   // UND dass alle Werte wirklich leer sind, wenn sie nicht explizit gesetzt wurden
   for(let day = 0; day < 5; day++){
     if(!schedule[day] || !Array.isArray(schedule[day])){
-      schedule[day] = ['', '', '', '', ''];
+      schedule[day] = ['', '', '', '', '', '', ''];
     } else {
       // Stelle sicher, dass alle Slots Strings sind und leer, wenn nicht explizit gesetzt
-      for(let slot = 0; slot < 5; slot++){
+      for(let slot = 0; slot < 7; slot++){
         const currentSlotValue = schedule[day][slot];
         // Nur behalten wenn es ein nicht-leerer String ist UND das Fach noch existiert
         if(currentSlotValue && typeof currentSlotValue === 'string' && currentSlotValue.trim()){
@@ -751,7 +786,7 @@ function renderSubjectsList(){
             const schedule = weekData.schedule;
             for(let day = 0; day < 5; day++){
               if(schedule[day]){
-                for(let slot = 0; slot < 5; slot++){
+                for(let slot = 0; slot < 7; slot++){
                   if(schedule[day][slot] === oldName){
                     schedule[day][slot] = subject.name;
                   }
@@ -816,7 +851,7 @@ function renderSubjectsList(){
           const schedule = weekData.schedule;
           for(let day = 0; day < 5; day++){
             if(schedule[day]){
-              for(let slot = 0; slot < 5; slot++){
+              for(let slot = 0; slot < 7; slot++){
                 if(schedule[day][slot] === subjectName){
                   schedule[day][slot] = '';
                 }
@@ -1117,11 +1152,11 @@ function copyWeekAToB(){
   for(let day = 0; day < 5; day++){
     scheduleBCopy[day] = [];
     if(scheduleA[day] && Array.isArray(scheduleA[day])){
-      for(let slot = 0; slot < 5; slot++){
+      for(let slot = 0; slot < 7; slot++){
         scheduleBCopy[day][slot] = scheduleA[day][slot] || '';
       }
     } else {
-      scheduleBCopy[day] = ['', '', '', '', ''];
+      scheduleBCopy[day] = ['', '', '', '', '', '', ''];
     }
   }
   
@@ -1156,11 +1191,11 @@ function copyWeekBToA(){
   for(let day = 0; day < 5; day++){
     scheduleACopy[day] = [];
     if(scheduleB[day] && Array.isArray(scheduleB[day])){
-      for(let slot = 0; slot < 5; slot++){
+      for(let slot = 0; slot < 7; slot++){
         scheduleACopy[day][slot] = scheduleB[day][slot] || '';
       }
     } else {
-      scheduleACopy[day] = ['', '', '', '', ''];
+      scheduleACopy[day] = ['', '', '', '', '', '', ''];
     }
   }
   
@@ -1203,12 +1238,19 @@ function sanitizeSchedule(schedule){
   for(let day = 0; day < 5; day++){
     sanitized[day] = [];
     if(schedule && Array.isArray(schedule[day])){
-      for(let slot = 0; slot < 5; slot++){
-        const value = schedule[day][slot];
-        sanitized[day][slot] = (typeof value === 'string') ? value : '';
+      // Migriere von 5-Slot zu 7-Slot Struktur
+      const existingSlots = schedule[day].length;
+      for(let slot = 0; slot < 7; slot++){
+        if(slot < existingSlots){
+          const value = schedule[day][slot];
+          sanitized[day][slot] = (typeof value === 'string') ? value : '';
+        } else {
+          // Neue Slots (6 und 7) als leer initialisieren
+          sanitized[day][slot] = '';
+        }
       }
     } else {
-      sanitized[day] = ['', '', '', '', ''];
+      sanitized[day] = ['', '', '', '', '', '', ''];
     }
   }
   return sanitized;
@@ -1257,7 +1299,7 @@ function exportSchedule(){
     weekA: timetableData.weekA,
     weekB: timetableData.weekB,
     subjectSettings: timetableData.subjectSettings,
-    useRealTimeBlocks: getUseRealTimeBlocks()
+    displayMode: getDisplayMode()
   };
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1285,11 +1327,24 @@ function importScheduleFromJSON(json){
     renderTimetable('B');
     updateHoursDisplay();
     
-    if(parsed && typeof parsed.useRealTimeBlocks === 'boolean'){
-      saveUseRealTimeBlocks(parsed.useRealTimeBlocks);
-      const realTimeBlocksCheckbox = document.getElementById('useRealTimeBlocks');
-      if(realTimeBlocksCheckbox){
-        realTimeBlocksCheckbox.checked = parsed.useRealTimeBlocks;
+    // Handle new unified display mode setting
+    if(parsed && typeof parsed.displayMode === 'boolean'){
+      saveDisplayMode(parsed.displayMode);
+      const displayModeSwitch = document.getElementById('displayModeSwitch');
+      if(displayModeSwitch){
+        displayModeSwitch.checked = parsed.displayMode;
+      }
+    }
+    // Backward compatibility: convert old separate settings to new unified setting
+    else if(parsed && (typeof parsed.useRealTimeBlocks === 'boolean' || typeof parsed.showBlocksInsteadOfTime === 'boolean')){
+      const useRealTime = parsed.useRealTimeBlocks === true;
+      const showBlocks = parsed.showBlocksInsteadOfTime === true;
+      // If both were enabled, or just showBlocks was enabled, use block mode
+      const displayMode = showBlocks;
+      saveDisplayMode(displayMode);
+      const displayModeSwitch = document.getElementById('displayModeSwitch');
+      if(displayModeSwitch){
+        displayModeSwitch.checked = displayMode;
       }
     }
     
@@ -1364,14 +1419,19 @@ function updateHoursDisplay(){
     return;
   }
   
-  const useRealTimeBlocks = getUseRealTimeBlocks();
+  const displayMode = getDisplayMode(); // false = time, true = blocks
   const result = calculateRemainingHours(timetableData, referenceDate);
-  
-  // Gesamtstunden
-  const totalSeconds = result.totalSeconds || 0;
-  document.getElementById('totalHours').textContent = useRealTimeBlocks
-    ? formatDuration(totalSeconds, true)
-    : formatSchoolHours(totalSeconds);
+
+  // Gesamtstunden / Gesamtblöcke
+  if(displayMode){
+    // Block mode (real-time): use actual durations and show block count
+    const totalBlocks = result.totalBlocks || 0;
+    document.getElementById('totalHours').textContent = totalBlocks.toFixed(1) + ' Blöcke';
+  } else {
+    // Time mode: use predefined hours and show time
+    const totalSeconds = result.totalSeconds || 0;
+    document.getElementById('totalHours').textContent = formatSchoolHours(totalSeconds);
+  }
   
   // Stunden pro Fach
   const listEl = document.getElementById('subjectHoursList');
@@ -1387,21 +1447,29 @@ function updateHoursDisplay(){
   
   subjects.forEach(subject => {
     const seconds = subjectSecondsMap[subject];
-    if(!seconds || seconds <= 0) return; // Überspringe Fächer mit 0 Zeit
-    
+    const blocks = result.subjectBlocks ? result.subjectBlocks[subject] : 0;
+
+    if(displayMode){
+      if(!blocks || blocks <= 0) return; // Überspringe Fächer mit 0 Blöcken
+    } else {
+      if(!seconds || seconds <= 0) return; // Überspringe Fächer mit 0 Zeit
+    }
+
     const card = document.createElement('div');
     card.className = 'subject-hours-card';
-    
+
     const nameEl = document.createElement('div');
     nameEl.className = 'subject-hours-name';
     nameEl.textContent = subject;
-    
+
     const hoursEl = document.createElement('div');
     hoursEl.className = 'subject-hours-value';
-    hoursEl.textContent = useRealTimeBlocks
-      ? formatDuration(seconds, true)
-      : formatSchoolHours(seconds);
-    
+    if(displayMode){
+      hoursEl.textContent = blocks.toFixed(1) + ' Blöcke';
+    } else {
+      hoursEl.textContent = formatSchoolHours(seconds);
+    }
+
     card.appendChild(nameEl);
     card.appendChild(hoursEl);
     listEl.appendChild(card);
@@ -1442,12 +1510,12 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHoursDisplay();
   });
   
-  // Realtime (90 Minuten) Toggle
-  const realTimeBlocksCheckbox = document.getElementById('useRealTimeBlocks');
-  if(realTimeBlocksCheckbox){
-    realTimeBlocksCheckbox.checked = getUseRealTimeBlocks();
-    realTimeBlocksCheckbox.addEventListener('change', () => {
-      saveUseRealTimeBlocks(realTimeBlocksCheckbox.checked);
+  // Anzeigemodus Switch (Stunden / Blöcke)
+  const displayModeSwitch = document.getElementById('displayModeSwitch');
+  if(displayModeSwitch){
+    displayModeSwitch.checked = getDisplayMode();
+    displayModeSwitch.addEventListener('change', () => {
+      saveDisplayMode(displayModeSwitch.checked);
       updateHoursDisplay();
     });
   }
