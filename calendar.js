@@ -4,6 +4,18 @@ const MS_PER_DAY = 24*60*60*1000;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
+// Element references
+const elEndDate = document.getElementById('endDate');
+const elInclude = document.getElementById('includeToday');
+const elHolidayFrom = document.getElementById('holidayFrom');
+const elHolidayTo = document.getElementById('holidayTo');
+const elExcursionDate = document.getElementById('excursionDate');
+const elExcursionName = document.getElementById('excursionName');
+const btnAddExcursion = document.getElementById('addExcursion');
+const elExcursionsAsHolidays = document.getElementById('excursionsAsHolidays');
+const btnExport = document.getElementById('exportBtn');
+const fileInput = document.getElementById('importFile');
+
 function ymdToDayNum(ymd){ 
   if(!ymd) return NaN; 
   const [y,m,d] = ymd.split('-').map(Number); 
@@ -461,17 +473,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Einstellungen initialisieren
   const s = loadUserData(); 
   saveUserData(s);
-  const savedEnd = localStorage.getItem('schultage_enddate_v1'); 
-  const elEndDate = document.getElementById('endDate');
+  const savedEnd = localStorage.getItem('schultage_enddate_v1');
   if(savedEnd) {
     elEndDate.value = savedEnd;
   } else {
     elEndDate.value = '2026-03-20';
   }
-  
+
    // Lade includeToday-Einstellung
    const savedIncludeToday = localStorage.getItem('schultage_includetoday_v1');
-   const elInclude = document.getElementById('includeToday');
    if(savedIncludeToday !== null) {
      elInclude.checked = savedIncludeToday === 'true';
    } else {
@@ -503,17 +513,9 @@ document.addEventListener('DOMContentLoaded', () => {
     drawer.setAttribute('aria-hidden','true'); 
   });
   
-  // Einstellungen-Event-Listener
-   const btnAdd = document.getElementById('addHoliday');
-   const btnReset = document.getElementById('resetHolidays');
-   const elHolidayFrom = document.getElementById('holidayFrom');
-   const elHolidayTo = document.getElementById('holidayTo');
-   const elExcursionDate = document.getElementById('excursionDate');
-   const elExcursionName = document.getElementById('excursionName');
-   const btnAddExcursion = document.getElementById('addExcursion');
-   const elExcursionsAsHolidays = document.getElementById('excursionsAsHolidays');
-   const btnExport = document.getElementById('exportBtn');
-   const fileInput = document.getElementById('importFile');
+   // Einstellungen-Event-Listener
+    const btnAdd = document.getElementById('addHoliday');
+    const btnReset = document.getElementById('resetHolidays');
   
    btnAdd && btnAdd.addEventListener('click', ()=>{
      addUserHoliday(elHolidayFrom.value, elHolidayTo.value, '');
