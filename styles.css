@@ -537,6 +537,11 @@ input:checked ~ .switch-text-on {
   border-color: rgba(255,193,7,0.4);
 }
 
+.calendar-day.excursion {
+  background: linear-gradient(180deg, rgba(224,247,250,0.9), rgba(178,235,242,0.9));
+  border-color: rgba(0,188,212,0.4);
+}
+
 .day-number {
   font-weight: 700;
   font-size: clamp(1rem, 2.5vw, 1.3rem);
@@ -562,6 +567,14 @@ input:checked ~ .switch-text-on {
   font-size: clamp(0.7rem, 1.8vw, 0.9rem);
   font-weight: 600;
   color: rgba(255,152,0,0.9);
+  margin-top: auto;
+  text-align: center;
+}
+
+.excursion-label {
+  font-size: clamp(0.7rem, 1.8vw, 0.9rem);
+  font-weight: 600;
+  color: rgba(0,188,212,0.9);
   margin-top: auto;
   text-align: center;
 }
@@ -596,6 +609,11 @@ input:checked ~ .switch-text-on {
 .legend-color.holiday {
   background: linear-gradient(180deg, rgba(255,243,224,0.9), rgba(255,235,200,0.9));
   border-color: rgba(255,193,7,0.4);
+}
+
+.legend-color.excursion {
+  background: linear-gradient(180deg, rgba(224,247,250,0.9), rgba(178,235,242,0.9));
+  border-color: rgba(0,188,212,0.4);
 }
 
 .legend-color.past {

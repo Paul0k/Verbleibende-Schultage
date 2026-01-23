@@ -28,20 +28,24 @@
       </div>
     </div>
 
-    <div class="calendar-legend">
-      <div class="legend-item">
-        <div class="legend-color weekend"></div>
-        <span>Wochenende</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color holiday"></div>
-        <span>Ferien</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color past"></div>
-        <span>Vergangen</span>
-      </div>
-    </div>
+     <div class="calendar-legend">
+       <div class="legend-item">
+         <div class="legend-color weekend"></div>
+         <span>Wochenende</span>
+       </div>
+       <div class="legend-item">
+         <div class="legend-color holiday"></div>
+         <span>Ferien</span>
+       </div>
+       <div class="legend-item">
+         <div class="legend-color excursion"></div>
+         <span>Exkursion</span>
+       </div>
+       <div class="legend-item">
+         <div class="legend-color past"></div>
+         <span>Vergangen</span>
+       </div>
+     </div>
   </div>
 
   <button class="settings-btn" id="openSettings" title="Einstellungen">
@@ -76,14 +80,32 @@
       <button class="ghost" id="resetHolidays">Reset</button>
     </div>
 
-    <label class="block-label">Ferienliste</label>
-    <div id="holidayList" class="muted">–</div>
+     <label class="block-label">Ferienliste</label>
+     <div id="holidayList" class="muted">–</div>
 
-    <label class="block-label">Export / Import (JSON)</label>
-    <div class="export-row">
-      <button id="exportBtn" class="action">Export</button>
-      <input id="importFile" type="file" accept="application/json" class="file-input" />
-    </div>
+     <label class="block-label">Exkursionen hinzufügen (einzelne Tage)</label>
+     <div class="row">
+       <input class="half input" type="date" id="excursionDate" />
+       <input class="half input" type="text" id="excursionName" placeholder="Name (optional)" />
+     </div>
+
+     <div class="actions">
+       <button class="action" id="addExcursion">Hinzufügen</button>
+     </div>
+
+     <div class="checkbox-row">
+       <label for="excursionsAsHolidays" class="label-inline">Exkursionen als Ferien zählen</label>
+       <input type="checkbox" id="excursionsAsHolidays" class="checkbox" />
+     </div>
+
+     <label class="block-label">Exkursionenliste</label>
+     <div id="excursionList" class="muted">–</div>
+
+     <label class="block-label">Export / Import (JSON)</label>
+     <div class="export-row">
+       <button id="exportBtn" class="action">Export</button>
+       <input id="importFile" type="file" accept="application/json" class="file-input" />
+     </div>
 
   </div>
 

@@ -65,21 +65,23 @@ function overlapWeekdaysDayNums(aS,aE,bS,bE){
   return countWeekdaysDayNums(s,e,true); 
 }
 
-function loadUserData(){ 
-  try{ 
-    const raw = localStorage.getItem('schultage_userdata_v1'); 
-    if(!raw) return {version:1, user:[], removedDefaults:[]}; 
-    const p = JSON.parse(raw); 
-    p.version = (p.version||1); 
-    p.user = Array.isArray(p.user)?p.user:[]; 
-    p.removedDefaults = Array.isArray(p.removedDefaults)?p.removedDefaults:[]; 
-    return p; 
-  }catch(e){ 
-    return {version:1, user:[], removedDefaults:[]}; 
-  } 
+function loadUserData(){
+  try{
+    const raw = localStorage.getItem('schultage_userdata_v1');
+    if(!raw) return {version:1, user:[], removedDefaults:[], excursions:[], excursionsAsHolidays:false};
+    const p = JSON.parse(raw);
+    p.version = (p.version||1);
+    p.user = Array.isArray(p.user)?p.user:[];
+    p.removedDefaults = Array.isArray(p.removedDefaults)?p.removedDefaults:[];
+    p.excursions = Array.isArray(p.excursions)?p.excursions:[];
+    p.excursionsAsHolidays = typeof p.excursionsAsHolidays === 'boolean' ? p.excursionsAsHolidays : false;
+    return p;
+  }catch(e){
+    return {version:1, user:[], removedDefaults:[], excursions:[], excursionsAsHolidays:false};
+  }
 }
 
-function buildEffectiveList(){ 
+function buildEffectiveList(){
   const CUT_OFF = '2026-03-20';
   const DEFAULT_HOLIDAYS = [
     {from:'2025-07-03', to:'2025-08-13', name:'Sommerferien'},
@@ -88,18 +90,48 @@ function buildEffectiveList(){
     {from:'2026-02-02', to:'2026-02-03', name:'Winterferien'}
   ];
   const DEFAULT_FEIERTAGE = [{from:'2025-11-24', to:'2025-11-24', name:'Lehrerfortbildung'}];
-  
-  const user = loadUserData(); 
-  const cutoffDay = ymdToDayNum(CUT_OFF); 
-  const defaults = DEFAULT_HOLIDAYS.concat(DEFAULT_FEIERTAGE).filter(d=>ymdToDayNum(d.from) <= cutoffDay); 
-  const map = new Map(); 
-  defaults.forEach(d=> map.set(d.from+'|'+d.to, {from:d.from,to:d.to,name:d.name, source:'default'})); 
-  (user.removedDefaults||[]).forEach(k=> map.delete(k)); 
-  (user.user||[]).forEach(d=>{ 
-    if(!d.from||!d.to) return; 
-    map.set(d.from+'|'+d.to, {from:d.from,to:d.to,name:d.name||'', source:'user'}); 
-  }); 
-  return Array.from(map.values()).sort((a,b)=> a.from < b.from ? -1 : (a.from > b.from ? 1 : 0)); 
+
+  const user = loadUserData();
+  const cutoffDay = ymdToDayNum(CUT_OFF);
+  const defaults = DEFAULT_HOLIDAYS.concat(DEFAULT_FEIERTAGE).filter(d => ymdToDayNum(d.from) <= cutoffDay);
+
+  const map = new Map();
+
+  defaults.forEach(d => {
+    map.set(d.from + '|' + d.to, {
+      from: d.from,
+      to: d.to,
+      name: d.name,
+      source: 'default'
+    });
+  });
+
+  (user.removedDefaults || []).forEach(k => map.delete(k));
+
+  (user.user || []).forEach(d => {
+    if(!d.from || !d.to) return;
+    map.set(d.from + '|' + d.to, {
+      from: d.from,
+      to: d.to,
+      name: d.name || '',
+      source: 'user'
+    });
+  });
+
+  if(user.excursionsAsHolidays){
+    (user.excursions || []).forEach(e => {
+      if(!e.date) return;
+      const date = e.date;
+      map.set(date + '|' + date, {
+        from: date,
+        to: date,
+        name: e.name || 'Exkursion',
+        source: 'excursion'
+      });
+    });
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.from < b.from ? -1 : (a.from > b.from ? 1 : 0));
 }
 
 function getEndDate(){
